@@ -1,7 +1,13 @@
 // src/components/Vendedores.js
-
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+} from 'react-native';
 import axios from 'axios';
 
 function Vendedores() {
@@ -11,62 +17,86 @@ function Vendedores() {
   const [nombre, setNombre]             = useState('');
   const [mensaje, setMensaje]           = useState('');
   const [vendedor, setVendedor]         = useState(null);
-  const [baseDeDatos, setBaseDeDatos]   = useState('DEPOFORT'); // default
+  const [baseDeDatos, setBaseDeDatos]   = useState('DEPOFORT');   // default
 
   const backendUrl = 'http://190.220.57.172:5000';
 
+  /* -----------------------------------------------------------
+     Pequeño helper para depurar y mostrar el motivo real
+  ----------------------------------------------------------- */
+  const describeError = (err) => {
+    // Axios siempre coloca la respuesta (si la hubo) en err.response
+    const status  = err.response?.status;
+    const payload = err.response?.data;
+
+    console.log('[Vendedores] ❌ Axios error →', {
+      message : err.message,
+      status,
+      payload,
+      config  : err.config,
+    });
+
+    // Texto “humano” que mostraremos en pantalla
+    return (
+      payload?.error   ||     // cuando tu API devuelve {error:"…"}
+      payload?.message ||     // ó {message:"…"}
+      err.message            // “Network Error”, timeout, etc.
+    );
+  };
+
+  /* ------------------------- CRUD -------------------------- */
   const handleCreate = async () => {
     try {
-      await axios.post(`${backendUrl}/api/vendedores`, 
+      await axios.post(
+        `${backendUrl}/api/vendedores`,
         { Codigo: codigo, NroDocumento: nroDocumento, Nombre: nombre },
-        { params: { BaseDeDatos: baseDeDatos } }
+        { params: { BaseDeDatos: baseDeDatos } },
       );
-      setMensaje('Vendedor creado exitosamente');
+      setMensaje('✅ Vendedor creado exitosamente');
       limpiarCampos();
     } catch (err) {
-      console.error(err);
-      setMensaje('Error al crear el vendedor');
+      setMensaje(`❌ ${describeError(err)}`);
     }
   };
 
   const handleGet = async () => {
     if (!vendedorId) {
-      setMensaje('Por favor, ingresa el ID del vendedor');
+      setMensaje('Ingresa el ID del vendedor');
       return;
     }
     try {
       const resp = await axios.get(`${backendUrl}/api/vendedores`, {
-        params: { id: vendedorId, BaseDeDatos: baseDeDatos }
+        params: { id: vendedorId, BaseDeDatos: baseDeDatos },
       });
+
       const data = resp.data;
       setVendedor(data);
       setCodigo(data.Codigo);
       setNroDocumento(data.NroDocumento);
       setNombre(data.Nombre);
-      setMensaje('Vendedor obtenido exitosamente');
+      setMensaje('✅ Vendedor obtenido');
     } catch (err) {
-      console.error(err);
-      setMensaje('Error al obtener el vendedor');
+      setMensaje(`❌ ${describeError(err)}`);
     }
   };
 
   const handleDelete = async () => {
     if (!vendedorId) {
-      setMensaje('Por favor, ingresa el ID del vendedor');
+      setMensaje('Ingresa el ID del vendedor');
       return;
     }
     try {
       await axios.delete(`${backendUrl}/api/vendedores`, {
-        params: { id: vendedorId, BaseDeDatos: baseDeDatos }
+        params: { id: vendedorId, BaseDeDatos: baseDeDatos },
       });
-      setMensaje('Vendedor eliminado exitosamente');
+      setMensaje('✅ Vendedor eliminado');
       limpiarCampos();
     } catch (err) {
-      console.error(err);
-      setMensaje('Error al eliminar el vendedor');
+      setMensaje(`❌ ${describeError(err)}`);
     }
   };
 
+  /* ------------------- utilidades UI ----------------------- */
   const limpiarCampos = () => {
     setVendedorId('');
     setCodigo('');
